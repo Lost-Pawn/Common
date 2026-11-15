@@ -1,17 +1,15 @@
-# Knitwork
+# Common
 
-A shared equipment platform for small tailors and self-help groups. Book garment-making equipment, arrange qualified operators, and manage approvals, handovers and returns.
+Borrow useful things. Share what you have. Common helps people lend tools, books, electronics, outdoor gear, household items and spaces, with owner approvals and a recorded return.
 
 **Stack:** Next.js · TypeScript · Go REST API · PostgreSQL · Docker
 
-## Features
-
-- Resource listings, eligibility checks and operator scheduling.
-- Approvals, waiting lists and fair-use quotas.
-- Check-in and return photos, incident reporting and activity history.
-- Role-based access and in-app notifications.
-- English, Hindi, Marathi, Bengali, Tamil and Telugu interface translations.
-- Help chat with cited guidance and optional AI-generated answers.
+- Any signed-in member can create listings and manage requests for their own resources.
+- Search by category, location or description; filter free items and your own listings.
+- Hourly or overnight borrowing up to seven days, with conflict checks, waiting lists and weekly limits.
+- Condition photos, return confirmation, incidents and activity history.
+- Classic light and dark themes, responsive layouts and six Indian interface languages.
+- Cited help chat; optional generated answers and user-content translation.
 
 ## Run locally
 
@@ -23,51 +21,40 @@ cd Knitwork
 docker compose up --build -d
 ```
 
-Open [localhost:8080](http://localhost:8080). Local demo mode works without external API credentials.
+Open [localhost:8080](http://localhost:8080). The GitHub repository currently retains its original name; the product is **Common**.
 
-Data is stored in a persistent PostgreSQL volume. Stop the app with `docker compose down`; adding `-v` deletes the database.
+All local demo accounts use **`CommonDemo2026!`**:
 
-### Demo accounts
-
-All accounts use the password **`KnitworkDemo2026!`**.
-
-| Role | Email |
+| Account | Email |
 | --- | --- |
-| Borrower | `asha@knitwork.test` |
-| Trained borrower | `ravi@knitwork.test` |
-| Manager | `manager@knitwork.test` |
-| Owner | `owner@knitwork.test` |
-| Administrator | `admin@knitwork.test` |
+| Member | `asha@common.test` |
+| Trained member | `ravi@common.test` |
+| Manager | `manager@common.test` |
+| Owner | `owner@common.test` |
+| Administrator | `admin@common.test` |
 
-These accounts are for local demonstration only.
+Data and condition photos persist in PostgreSQL. Stop with `docker compose down`; adding `-v` removes the database volume.
 
-## Configuration
+## Configuration and deployment
 
-See [.env.example](.env.example) for available settings. Copy it to `.env` to customise local ports or enable AI features.
+Copy [.env.example](.env.example) to `.env` to change ports or enable optional AI features. Local help and interface translations work without external credentials. Generated answers and user-content translation need `HELP_API_BASE_URL`, `HELP_API_KEY` and `HELP_MODEL`.
 
-Generated help answers and translation of user-written content require `HELP_API_BASE_URL`, `HELP_API_KEY` and `HELP_MODEL`. Without them, cited local help and interface translations remain available.
+For Render, create a Blueprint from [render.yaml](render.yaml), supply `ADMIN_EMAIL` and `ADMIN_PASSWORD`, deploy and check `/api/health`. The Blueprint uses paid persistent PostgreSQL and a Docker web service. Production disables demo accounts. Set `APP_ORIGIN` when using a custom domain.
 
-## Deploy to Render
+Existing installations: follow [the upgrade guide](docs/UPGRADE.md) to retain the original database volume. Do not rename an existing Render database simply to change the product name.
 
-1. Connect this repository to Render and create a Blueprint using [render.yaml](render.yaml).
-2. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD`; optionally supply the three `HELP_*` settings.
-3. Deploy, check `/api/health`, then sign in with the administrator account to configure the centre.
-
-The Blueprint provisions a Docker service and persistent PostgreSQL database on paid plans. Production uses `DEMO_SEED=false` and does not include demo accounts. Render supplies the database connection and application origin; set `APP_ORIGIN` for a custom domain.
-
-## Tests
-
-Run backend integration tests with a temporary database:
+## Checks
 
 ```bash
-docker compose -p knitwork-test -f compose.test.yaml up --abort-on-container-exit --exit-code-from test
-docker compose -p knitwork-test -f compose.test.yaml down
+cd frontend
+npm ci
+npm run build
+cd ..
+node scripts/check-locales.mjs
+docker compose -p common-test -f compose.test.yaml up --abort-on-container-exit --exit-code-from test
+docker compose -p common-test -f compose.test.yaml down
 ```
 
-## Project structure
+`frontend/` contains the interface; `backend/` contains the API and migrations.
 
-- `frontend/` — Next.js interface
-- `backend/` — Go API and database migrations
-- `docs/` — Requirements, API reference, report and demo guide
-
-[Requirements](docs/SRS.md) · [API reference](docs/API.md) · [Project report](docs/REPORT.md) · [Demo guide](docs/DEMO.md) · [Validation](docs/VALIDATION.md)
+[Requirements](docs/SRS.md) · [API](docs/API.md) · [Demo](docs/DEMO.md) · [Report](docs/REPORT.md) · [Validation](docs/VALIDATION.md)

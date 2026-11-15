@@ -1,99 +1,65 @@
-# Knitwork Product and Implementation Report
+# Common Product and Implementation Report
 
-28 October 2026
+Version 2 dated 15 November 2026
 
 ## Product overview
 
-Knitwork is a functional prototype for a shared garment-production centre serving small tailoring businesses and self-help groups. It coordinates access to embroidery equipment, sewing workstations and cutting tables through verified membership, operator scheduling, human approval and recorded handovers. The implementation includes a Next.js frontend, a Go REST API, persistent PostgreSQL storage, Docker development and test environments, a Render deployment blueprint and a cited help chatbot.
+Common lets people share useful things they already own. A member can lend books, tools, outdoor gear, household items or a workspace and borrow from others through the same account. Owners set the conditions, review requests and confirm returns. The product supports free sharing and hourly usage estimates while keeping the handover history in one place.
 
-The central design decision is to complete the resource-sharing lifecycle. A borrower returning equipment does not immediately make it available again: staff confirm the return, and reported damage keeps the equipment on hold until the incident is resolved and an inspection is recorded.
+The implementation combines a responsive Next.js interface, a Go REST API and persistent PostgreSQL storage. It includes local Docker setup, a disposable test environment, Render configuration, six interface languages and a cited help chat. The application is a working prototype; operational adoption and hosted deployment need separate validation.
 
-## Problem statement and Indian setting
+## Problem and target users
 
-The hackathon asks teams to unlock underused equipment and spaces while protecting owners, users and institutional property. Its required journey includes listing, discovery, eligibility, requests, approval or waiting lists, check-in, condition reporting, return, incidents and an auditable history.
+Useful possessions can sit idle while someone nearby needs temporary access. Informal messages can arrange the initial exchange, but often leave availability, return dates and condition records scattered across conversations. Common records that process from the first request to the confirmed return.
 
-The selected setting is grounded in an existing Indian operating model. The MSME Development and Facilitation Office in Chennai lists common facility centres and a women’s garment cluster offering computerised embroidery, stitching and training facilities. This supports the plausibility of shared garment equipment. It does not establish that any named centre has idle capacity, that its staff have been interviewed, or that they have agreed to adopt Knitwork. [Official common facility directory](https://msmedi-chennai.gov.in/GARMS_Admin/ClusterTN.aspx).
+Target users include residents borrowing occasional household tools, students sharing books and electronics, hobbyists exchanging creative gear, groups arranging reusable event supplies and hosts offering workspace. Each listing provides its own location and conditions. The catalogue is general-purpose and does not depend on a single workshop or industry.
 
-A proposed first adopter is one centre with equipment already in place and a known member base. That centre can offer browser booking while continuing to accept assisted requests by phone. The expected benefits are clearer availability, recorded access requirements and fewer handover disputes. A real pilot must validate those expectations with workers and centre staff.
+Owners may benefit from clearer schedules, recorded condition and reuse of idle possessions. Borrowers may avoid buying something they only need temporarily. These are intended benefits, not measured adoption or environmental outcomes. The project does not claim verified cost or carbon savings.
 
-## Target users and responsibilities
+## Core experience
 
-- Small tailors and self-help groups request equipment, describe their work, follow usage conditions, record collection and return, and report problems.
-- Resource owners define availability, rates, training rules, turnaround time and usage limits. They review requests involving their property.
-- Centre managers verify membership and training, authorise operators, record assisted requests and coordinate incidents and maintenance.
-- Administrators manage account roles and suspension and review escalated disputes.
-- Operators are scheduled resources with recorded qualifications and working hours. They do not receive automatic permission from the chatbot.
+A member creates a listing with a category, description, location, rules and availability. Zero hourly rate means free to borrow. Specialist qualifications and operator support are optional; everyday listings do not require staff approval to publish.
 
-Public registration creates an unverified borrower. Privileged roles are assigned by an administrator, owners must also be verified before listing equipment, and API permissions are checked independently of what the interface displays.
+Other members search the catalogue and request dates. The owner reviews the purpose and either approves, rejects or waitlists the request. The system checks conflicting loans, weekly caps and the resource's access policy before approval. Ordinary members manage their own listings without receiving access to other owners' resources.
 
-## Core features implemented
+Loans may span multiple days, up to seven days within the chosen duration limit. Overnight lending uses 0 to 24 operating hours. Resources with limited operating hours and assisted sessions retain same-day scheduling. Weekly quotas account for time in every calendar week the loan overlaps.
 
-Resource discovery supports text search, category filters, maintenance status, operating hours and reserved periods. Each listing explains fees, deposit terms, training requirements and whether supervised access is permitted. The request form records purpose, time and acceptance of conditions.
+The borrower records condition at collection and return. The owner inspects the return before completing it. Damage creates a hold and incident for human review. Participants can inspect their booking timeline, receive reminders and request extra time. Private condition photographs remain limited to participants and authorised staff.
 
-The approval workflow checks verified active membership, training, operator qualifications and availability, equipment availability, session length, date limits, turnaround time and weekly quota. The owner or manager can approve, reject with a reason, or place the request on a waiting list. Earlier eligible requests receive priority unless an authorised reviewer records an exception; scheduling and safety constraints remain enforced.
+## Interface design
 
-Business-group quotas let staff place several member accounts under one allocation limit. Borrowers cannot reset that quota by editing the business name in their profile. The implementation uses per-resource weekly reserved hours, with Monday boundaries in India Standard Time.
+The interface uses warm neutral surfaces, serif headings, restrained green accents and simple category illustrations. Cards distinguish the resource, location, access state and price. Search, category selection, free-only filtering and personal listings are available from discovery.
 
-Check-in and return require condition notes, a photograph and a checklist acknowledgement. Image access is restricted to the borrower and authorised staff. Check-in rechecks eligibility, including changes since approval. A manager can record an early handover with a reason; an ordinary borrower can check in within fifteen minutes of the start time.
+Light and dark themes share semantic colour tokens across authentication, discovery, bookings, profiles, management and dialogs. The chosen theme persists and defaults to the device preference for a new visitor. Short entrance and hover transitions respect reduced-motion settings. Layouts adapt for smaller screens; forms retain labelled inputs and visible focus states.
 
-Extensions require review and cannot silently change an existing reservation. Cancellation releases a reservation and notifies waiting members. Incidents support damage, delay, scheduling conflict and other issues, with resolution notes and administrator escalation. External payment notes record a staff-confirmed reference but do not process or verify money transfers.
+English, Hindi, Marathi, Bengali, Tamil and Telugu are available for interface text. Generated translation of member-written content is optional, labelled and accompanied by its original. Linguistic completeness tests do not replace native-speaker review.
 
-The centre overview displays request counts, waitlists, overdue sessions, completed reservations and recorded hours. Persistent in-app notifications cover decisions, reminders, cancellations and incidents. A periodic worker uses deduplication keys so repeated runs do not send the same reminder again.
+## Technical depth
 
-## Interface language and help
+Next.js exports static assets, which Go serves alongside the REST API from the same origin. PostgreSQL holds all persistent state, including bounded condition images, avoiding dependence on an ephemeral container filesystem. Dependency versions are pinned through the Go module and npm lockfiles.
 
-The interface uses short forms, status labels, large action buttons, a resource-card layout and one detailed booking view. Responsive layouts accommodate smaller screens, and dialogs support keyboard focus and Escape. The language selector switches English, Hindi, Marathi, Bengali, Tamil and Telugu interface dictionaries and remembers the selection.
+Allocation decisions use transactional locks and PostgreSQL exclusion constraints. A resource and any assigned operator cannot receive overlapping confirmed bookings. Approval revalidates account state, qualifications, working hours, turnaround time, queue priority and individual or assigned-group quotas.
 
-The help section uses a conventional chat interface. PostgreSQL full-text retrieval selects passages from the published help guide. Without API credentials, the application returns cited excerpts. With an OpenAI-compatible Chat Completions provider configured, the retrieved context is sent to the model and a generated answer is displayed with source passages. If that provider fails, local help remains available. This is lexical retrieval, not an embedding or vector-database implementation.
+Authorisation follows resource ownership rather than a special owner role. A member can review an incoming request for their own resource but cannot inspect or alter unrelated private loans. Managers retain community review permissions; administrators additionally manage roles and escalated incidents. Password hashes, revocable HTTP-only sessions and same-origin mutation checks protect authenticated operations.
 
-The chatbot does not retrieve private bookings or qualification records and has no action tools. User questions and text explicitly submitted for translation are sent to the configured provider. User-authored text remains in its original form unless a provider-backed translation is requested; generated translations are labelled. Native-speaker review and expanded regional-language retrieval remain necessary before real deployment.
+The help assistant searches a published corpus using PostgreSQL full-text retrieval. Without credentials it returns cited excerpts. With a compatible provider it generates an answer grounded in those excerpts, falling back locally on provider failure. It never operates resources or makes approval decisions.
 
-## Architecture and technical depth
+## Deployment and upgrade
 
-The frontend is Next.js 16.4.3 with React 19.3.1 and TypeScript 5.9.3. It exports static assets that the Go 1.27.1 service serves alongside its REST API. This keeps authentication and browser requests on one origin. PostgreSQL 17 stores users, sessions, equipment, operators, bookings, photos, incidents, notifications, help passages and audit events. Redis is not required for this release.
+Docker Compose builds the frontend and backend and starts persistent PostgreSQL. Fresh installations use Common service and database names. Existing installations retain their database name, password and volume through configuration. Additive migrations expand duration limits and generalise old category labels without deleting booking history or condition evidence.
 
-Allocation decisions use a PostgreSQL transaction and an advisory lock. Exclusion constraints independently prevent overlapping active reservations for a machine or an assigned operator. This provides a database safeguard even when two reviewers attempt approvals at the same time. The broad allocation lock favours correctness and simplicity for one centre; a larger installation should evaluate more granular locking and load tests.
+The local demonstration includes general resources and fictional accounts. Production disables those accounts and supports administrator bootstrap. The Render Blueprint describes a fresh paid deployment; existing hosted services should keep their existing database identity and connection. Provider credentials and actual Render hosting are external configuration steps.
 
-Session cookies contain random tokens; only token hashes are stored in the database. Passwords use bcrypt. Production cookies are Secure and HttpOnly with SameSite protection. Mutation requests require JSON and an accepted origin. SQL uses parameters, photo size and types are bounded, and role checks protect private records. The audit API only appends records, although a database administrator could still alter them; the history is not a cryptographic ledger.
+## Demonstration and presentation
 
-Photos are stored in PostgreSQL for straightforward persistence across container recreation. This keeps the prototype independent of ephemeral application storage but increases database size and backup volume. Private object storage would be a more suitable expansion path for a large installation.
+Start with an everyday need: someone wants a tent for a weekend and another person already has one. Sign in as a member, list a tent, switch to another member and request a two-day loan. Return to the creator's account and approve it. Explain how the same account can lend and borrow without being a platform administrator.
 
-## Configuration and deployment
+Show the complete condition and return process on a booking whose approved start time has arrived. For a future booking, a manager can demonstrate early handover with a recorded reason. Then show one failure case: an overlapping reservation or weekly limit prevents approval. Use the drill kit to demonstrate optional specialist support separately.
 
-Docker Compose builds the frontend and backend, starts PostgreSQL and waits for health checks. The normal database uses a named volume. A separate test composition uses temporary database storage and runs integration tests without touching local demonstration records. Local mode uses fictional accounts and needs no external API credentials.
+Close with the ownership boundary, persistent history and accessible interface. Show dark mode and a regional language. Present technical evidence from the validation record rather than claiming every deployment or production-readiness check has passed.
 
-Production configuration requires a PostgreSQL connection, production mode, the HTTPS application origin and initial administrator credentials. Render can provide the origin through RENDER_EXTERNAL_URL. The optional help settings are HELP_API_BASE_URL, HELP_API_KEY and HELP_MODEL. They enable generated help and user-content translation. The repository contains .env.example, .env.test, version lockfiles, a Dockerfile and render.yaml. Go dependencies are installed from go.mod and go.sum; requirements.txt is a human-readable toolchain reference.
+## Limitations and next steps
 
-The Render blueprint declares a Docker web service and managed PostgreSQL with private database access. Its chosen plans incur hosting charges. A local build does not establish that a Render deployment has been created; account configuration, a live deployment and judge credentials must be completed before submitting the public product link. [Render Blueprint reference](https://render.com/docs/blueprint-spec).
+The prototype does not arrange delivery, settle payments, validate real identities or guarantee that a listing is suitable for a borrower's purpose. General listing images are category illustrations; uploaded photographs belong to the condition workflow. Location search matches text, with no distance ranking or GPS. Long-term rentals beyond seven days require a future policy extension.
 
-## Verification results
-
-The Next.js production build and TypeScript checks passed. Go unit and integration tests passed, including a run with the race detector and static analysis with go vet. The disposable Docker Compose test environment also completed successfully. The six locale dictionaries passed automated checks for matching, non-empty message keys. A multi-stage Docker image was built successfully.
-
-Integration tests cover verified owner listing and its audit entry; the complete supervised sharing journey; anonymous and cross-role access; private photo protection; simultaneous approvals; operator collisions across machines; waiting-list exceptions; shared business quotas; eligibility revocation; conflicting extensions; damaged returns and maintenance release; reminder deduplication; session revocation; help retrieval; and mocked provider generation and failure fallback.
-
-A separate HTTP smoke test exercised the running Docker container from request through supervised approval, photo check-in, photo return and confirmation. It produced a completed booking, two stored condition images and five audit events. Both the app and database containers were then recreated while retaining the named volume. Record counts and content digests were unchanged; authenticated downloads of both images retained identical SHA-256 hashes. The condition images are explicitly labelled synthetic fixtures, and the booking records no real equipment use.
-
-A real external model account and a hosted Render deployment have not been exercised. Visual and interactive browser verification was not completed. Automated API tests establish server behaviour, not every aspect of interface usability or accessibility.
-
-## Strengths and limitations
-
-The main strengths are a focused use case, a complete resource lifecycle, database-backed conflict prevention, explainable human decisions, group-aware fairness, persistent evidence and a local setup that does not require paid APIs. The product can be explained through a single worker’s request and handover rather than a broad marketplace story.
-
-The prototype is limited to one centre, same-day sessions and manually maintained operator shifts. It does not independently verify identity or training, operate machines, provide equipment insurance, process deposits, detect physical damage, send SMS or email, or certify compliance. Password recovery, stronger distributed abuse controls, formal accessibility review, backup drills and native-speaker review remain production tasks. No real user study or adoption evidence is claimed.
-
-Reservation hours and completed sharing cycles can help measure resource use. They are not proof of carbon savings, avoided purchases or improved income. Such impact claims require an agreed baseline and real pilot data.
-
-## Presentation and demonstration
-
-Open with a worker’s practical need: Asha can sew locally but needs one hour of embroidery equipment and a qualified operator. Explain why an empty machine slot alone is insufficient. Show the resource rules, request, operator assignment and approval, then complete the before photo, check-in, return photo and owner inspection.
-
-Use one contrasting failure scenario: another request collides with the reserved operator, or a damaged return prevents the next check-in. Show the reason and audit history. Finish by changing the interface language and asking the help chat how to return damaged equipment, making its citations visible.
-
-A suggested seven-slide structure is problem, target users, complete workflow, live demonstration, technical design, trust and accessibility, and pilot plan. Assign presenters the actual journeys they understand: borrower request, manager review, handover and evidence, or architecture and deployment. Do not invent individual contributions.
-
-## Originality disclosure and submission readiness
-
-The project was implemented with substantial Codex assistance for planning, code generation, testing and documentation. It uses the open-source frameworks and packages recorded in the lockfiles and code-based SVG illustrations. No purchased application template was used. Participants must review third-party licences, complete their actual names and contributions, and disclose AI assistance in the submission.
-
-Before judging, confirm the hosted link, repository access, judge accounts, team details and continued hosting availability. The README supplies setup commands and credentials for the fictional local demonstration; docs/DEMO.md expands the presentation guidance. The requirements specification is supplied separately.
+Before a public launch, validate the lending workflow with real users, review translations with native speakers, test accessibility more formally, establish moderation and support practices, and exercise backups and recovery. Actual team contributions and implementation assistance belong in the participant record. Common's value should be assessed through real completed exchanges and user feedback.

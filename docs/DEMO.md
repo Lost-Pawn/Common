@@ -1,54 +1,28 @@
-# Presentation and demonstration guide
+# Common demo guide
 
-## The story
+## Story
 
-Asha runs a small tailoring business. She has a sewing machine but needs computerised embroidery for a short batch. A nearby shared garment centre owns the equipment and has spare sessions. The centre needs to know who will use it, whether an operator is required, and what happens if it is returned damaged.
+Asha has a tent she uses a few weekends each year. Ravi needs one for a short trip. Common lets Asha list it, review Ravi's dates and record its return, while both can also borrow from other people.
 
-Knitwork coordinates that entire relationship. The product grants accountable access to shared equipment; it does not sell tailoring services or automatically operate a machine.
+## Walkthrough
 
-## Suggested slide sequence
+1. Open localhost:8080 and choose the Member demo account. Show discovery, free items, categories and dark mode.
+2. Choose Add a listing. Enter a tent, Outdoors, its location and return conditions. Leave training empty, price at zero, operating hours at 0 and 24, and duration at 168 hours.
+3. Sign out through the sidebar or My profile on mobile. Sign in as `ravi@common.test` with `CommonDemo2026!`.
+4. Find the new listing and request two future days. Accept its conditions and explain the trip.
+5. Sign in as `asha@common.test`. Open My bookings to see the incoming request and approve it. Show that Asha still has an ordinary member account.
+6. For a booking at its approved start, collect it with a before photo and checklist, return with an after photo, then have the owner confirm inspection. For a future-slot demo, a manager can record early check-in with an explicit reason.
+7. Show a competing request, a waiting list or an extension conflict. Explain the decision shown by the application.
+8. Open the help chat and ask how returns work. Show its citations, then switch interface language.
 
-1. **Problem:** specialist equipment can be unaffordable to an individual tailor while a shared centre has unused sessions. Explain access, training, scheduling and handover barriers.
-2. **Users:** a tailor or self-help group, the resource owner, the centre manager, an authorised operator and an administrator.
-3. **Solution:** show the lifecycle from request to inspected return. Explain that both machine and operator must be available.
-4. **Live product:** complete one supervised booking, then show a conflicting request and a damage hold.
-5. **Engineering:** show separate Next.js and Go folders, PostgreSQL overlap constraints, business-group quotas and append-only application history.
-6. **Trust and accessibility:** explain human verification, private photos, six interface languages and manager-assisted requests.
-7. **Impact and next steps:** report completed reservations and reuse sessions, then propose a pilot with one actual centre. Avoid invented adoption or environmental savings.
+All demo identities and resources are fictional. Use a clearly labelled test photograph for condition evidence.
 
-## A practical demonstration order
+## Presentation points
 
-Open the app in two browser profiles, one for Asha and one for the manager. Prepare two small fictional condition photos before presenting. Use tomorrow's date within the listed hours. The manager's early check-in action requires an explicit reason, so the demo can proceed without changing the computer clock.
+- Problem: useful possessions are idle while others need occasional access.
+- Product: one account can lend and borrow, with owner approval and a traceable return.
+- Technical depth: permissions by ownership, transactional scheduling, multi-week quotas, persistent images and restart-safe reminders.
+- Sustainability: repeated use is observable through completed loans; the app does not invent carbon savings.
+- Limits: collection and payments are arranged outside the platform; live hosting and provider configuration need separate verification.
 
-- Show a listing and its rules, rates, availability and training policy.
-- Request one hour of embroidery with operator assistance.
-- Assign Sunita and approve as the manager.
-- Show a second request for that machine or the same operator at the same time. Explain the rejection, then place it on the waiting list.
-- Record a before photo, check in, add the after photo and return.
-- Confirm the return and read the audit timeline.
-- On another booking, report a fault and show why the next borrower cannot check in before inspection and release.
-- Switch to an Indian language and ask the help chat about returning damaged equipment. Show the citations and distinguish local retrieval from optional model generation.
-
-## Answers to likely questions
-
-**Why would someone use this instead of WhatsApp?** Staff can still receive a request by phone or chat and enter it on the borrower's behalf. Knitwork provides one availability record, checked eligibility, visible allocation reasons and a persistent handover history.
-
-**Why would an owner participate?** The proposed benefits are better use of spare sessions, fee income where applicable and fewer coordination disputes. These are hypotheses to validate with a centre operator, not established adoption results.
-
-**What makes this more than booking?** A reservation combines eligibility, equipment and operator availability, fair allocation and condition-controlled release. The lifecycle continues after the borrower says they are finished.
-
-**Where is the AI?** The help system retrieves approved passages, optionally generates a grounded answer through the configured provider and shows sources. It has no authority over approvals or penalties. The core workflow works without an external model.
-
-**What is the sustainability benefit?** Repeated access and maintenance can improve use of existing equipment. The prototype measures reservation activity and reuse cycles. Carbon or purchase-avoidance claims need separate evidence.
-
-**Is it ready for real production?** It is a functional single-centre prototype. A production pilot still needs staff workflow validation, native-speaker review, backup and recovery procedures, stronger abuse controls, password recovery and operational support.
-
-## Submission checklist
-
-- Deployed judge-accessible link and verified credentials.
-- GitHub repository access.
-- SRS and implementation report.
-- Team names and accurate contributions in TEAM.md.
-- AI assistance and third-party components disclosed.
-- Known limitations stated.
-- Hosting and database remain available throughout judging.
+The current GitHub repository remains at Lost-Pawn/Knitwork until its owner renames it. The product name shown throughout the application is Common.
