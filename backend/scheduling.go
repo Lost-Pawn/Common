@@ -46,11 +46,11 @@ func checkTime(p resourcePolicy, start, end time.Time) error {
 	if !end.After(start) || end.Sub(start) < 15*time.Minute || end.Sub(start) > time.Duration(p.Max)*time.Hour {
 		return fmt.Errorf("duration_limit")
 	}
-	if !withinHours(start, end, p.Open, p.Close) {
+	if !(p.Open == 0 && p.Close == 24) && !withinHours(start, end, p.Open, p.Close) {
 		return fmt.Errorf("outside_hours")
 	}
 	day := start.In(india).Format("2006-01-02")
-	if day < p.From.Format("2006-01-02") || day > p.To.Format("2006-01-02") {
+	if day < p.From.Format("2006-01-02") || end.In(india).Format("2006-01-02") > p.To.Format("2006-01-02") {
 		return fmt.Errorf("outside_dates")
 	}
 	return nil
@@ -103,13 +103,23 @@ func checkAllocation(ctx context.Context, tx pgx.Tx, p resourcePolicy, b booking
 			return fmt.Errorf("operator_unavailable")
 		}
 	}
-	var used float64
-	week := weekStart(b.Start)
-	if e := tx.QueryRow(ctx, `SELECT COALESCE(sum(extract(epoch from(ends_at-starts_at))/3600),0) FROM bookings WHERE (borrower_id=$1 OR borrower_id IN (SELECT id FROM users WHERE allocation_group<>'' AND allocation_group=(SELECT allocation_group FROM users WHERE id=$1))) AND resource_id=$2 AND id<>$3 AND starts_at>=$4 AND starts_at<$5 AND status IN ('approved','in_use','return_pending','completed')`, b.Borrower, b.Resource, b.ID, week, week.AddDate(0, 0, 7)).Scan(&used); e != nil {
-		return e
-	}
-	if used+b.End.Sub(b.Start).Hours() > float64(p.Weekly) {
-		return fmt.Errorf("weekly_limit")
+	// Count only the overlapping hours in each calendar week, including overnight loans.
+	for week := weekStart(b.Start); week.Before(b.End); week = week.AddDate(0, 0, 7) {
+		next := week.AddDate(0, 0, 7)
+		from, to := b.Start, b.End
+		if from.Before(week) {
+			from = week
+		}
+		if to.After(next) {
+			to = next
+		}
+		var used float64
+		if e := tx.QueryRow(ctx, `SELECT COALESCE(sum(extract(epoch from(LEAST(ends_at,$5)-GREATEST(starts_at,$4)))/3600),0) FROM bookings WHERE (borrower_id=$1 OR borrower_id IN (SELECT id FROM users WHERE allocation_group<>'' AND allocation_group=(SELECT allocation_group FROM users WHERE id=$1))) AND resource_id=$2 AND id<>$3 AND starts_at<$5 AND ends_at>$4 AND status IN ('approved','in_use','return_pending','completed')`, b.Borrower, b.Resource, b.ID, week, next).Scan(&used); e != nil {
+			return e
+		}
+		if used+to.Sub(from).Hours() > float64(p.Weekly) {
+			return fmt.Errorf("weekly_limit")
+		}
 	}
 	busy := b.End.Add(time.Duration(p.Buffer) * time.Minute)
 	var n int

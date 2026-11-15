@@ -24,7 +24,7 @@ func validCategory(category string) bool {
 func validResource(in ResourceInput) bool {
 	_, e1 := time.Parse("2006-01-02", in.AvailableFrom)
 	_, e2 := time.Parse("2006-01-02", in.AvailableTo)
-	return len(strings.TrimSpace(in.Name)) >= 3 && len(in.Name) <= 120 && len(in.Description) <= 2000 && len(in.Location) > 0 && len(in.Rules) > 0 && len(in.Rules) <= 2000 && in.MaxHours >= 1 && in.MaxHours <= 12 && in.WeeklyHours >= 1 && in.WeeklyHours <= 60 && in.OpenHour >= 0 && in.CloseHour <= 24 && in.CloseHour > in.OpenHour && in.BufferMinutes >= 0 && in.BufferMinutes <= 180 && in.HourlyRate >= 0 && in.Deposit >= 0 && e1 == nil && e2 == nil && in.AvailableTo >= in.AvailableFrom && (in.OperatorPolicy == "none" || in.OperatorPolicy == "optional" || in.OperatorPolicy == "required") && validCategory(in.Category)
+	return len(strings.TrimSpace(in.Name)) >= 3 && len(in.Name) <= 120 && len(in.Description) <= 2000 && len(in.Location) > 0 && len(in.Rules) > 0 && len(in.Rules) <= 2000 && in.MaxHours >= 1 && in.MaxHours <= 168 && in.WeeklyHours >= 1 && in.WeeklyHours <= 168 && in.OpenHour >= 0 && in.CloseHour <= 24 && in.CloseHour > in.OpenHour && in.BufferMinutes >= 0 && in.BufferMinutes <= 180 && in.HourlyRate >= 0 && in.Deposit >= 0 && e1 == nil && e2 == nil && in.AvailableTo >= in.AvailableFrom && (in.OperatorPolicy == "none" || in.OperatorPolicy == "optional" || in.OperatorPolicy == "required") && validCategory(in.Category)
 }
 func (a *App) createResource(w http.ResponseWriter, r *http.Request) {
 	u := current(r)

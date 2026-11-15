@@ -125,6 +125,31 @@ func TestFullSharingLifecycle(t *testing.T) {
 			t.Fatal("missing listing audit")
 		}
 	})
+	t.Run("new members share overnight and quotas span weeks", func(t *testing.T) {
+		code, _, newcomer := call(nil, "POST", "/api/auth/register", map[string]string{"name": "Community Member", "email": "reader@example.test", "password": "CommunityPassword"})
+		if code != 201 {
+			t.Fatal("signup failed")
+		}
+		listing := ResourceInput{Name: "Camping tent", Category: "outdoors", Location: "Pune", Rules: "Return clean", OperatorPolicy: "none", MaxHours: 168, WeeklyHours: 30, OpenHour: 0, CloseHour: 24, AvailableFrom: start.Format("2006-01-02"), AvailableTo: start.AddDate(0, 2, 0).Format("2006-01-02")}
+		var res map[string]int64
+		json.Unmarshal(must(newcomer, "POST", "/api/resources", listing, 201), &res)
+		sunday := weekStart(start).AddDate(0, 0, 13).Add(12 * time.Hour)
+		borrow := func(from, to time.Time) int64 {
+			var out map[string]int64
+			json.Unmarshal(must(asha, "POST", "/api/bookings", BookingInput{ResourceID: res["id"], StartsAt: from, EndsAt: to, Purpose: "Weekend camping trip", Accepted: true}, 201), &out)
+			return out["id"]
+		}
+		first := borrow(sunday, sunday.Add(36*time.Hour))
+		act(newcomer, first, ActionInput{Action: "approve", Reason: "Tent is ready"}, 200)
+		second := borrow(sunday.Add(48*time.Hour), sunday.Add(56*time.Hour))
+		body := act(newcomer, second, ActionInput{Action: "approve", Reason: "Check the second week quota"}, 409)
+		if !bytes.Contains(body, []byte("weekly_limit")) {
+			t.Fatalf("wrong quota response: %s", body)
+		}
+		// Ordinary resources require owner approval, without privileged role assignment or training.
+		id := request(newcomer, 3, start.Add(7*time.Hour), false)
+		act(manager, id, ActionInput{Action: "approve", Reason: "Ordinary resource access"}, 200)
+	})
 	t.Run("authentication and role boundaries", func(t *testing.T) {
 		must(nil, "GET", "/api/resources", nil, 401)
 		must(asha, "GET", "/api/members", nil, 403)

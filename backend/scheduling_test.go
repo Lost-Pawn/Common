@@ -35,3 +35,18 @@ func TestDurationAndDateLimits(t *testing.T) {
 		t.Fatal("out of range accepted")
 	}
 }
+
+func TestOvernightResourcesRespectAvailability(t *testing.T) {
+	start := time.Date(2026, 11, 2, 10, 0, 0, 0, india)
+	p := resourcePolicy{Max: 168, Open: 0, Close: 24, From: start.AddDate(0, 0, -1), To: start.AddDate(0, 0, 2)}
+	if err := checkTime(p, start, start.Add(48*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkTime(p, start, start.Add(72*time.Hour)); err == nil || err.Error() != "outside_dates" {
+		t.Fatal("return outside availability accepted")
+	}
+	p.Close = 18
+	if err := checkTime(p, start, start.Add(24*time.Hour)); err == nil {
+		t.Fatal("overnight booking accepted for session-only resource")
+	}
+}
