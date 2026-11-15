@@ -31,9 +31,7 @@ export function isStaff(role: string) {
   return ["owner", "manager", "admin"].includes(role);
 }
 export function canManage(role: string, id: number, owner: number) {
-  return (
-    ["manager", "admin"].includes(role) || (role === "owner" && id === owner)
-  );
+  return ["manager", "admin"].includes(role) || id === owner;
 }
 export function localISO(date: string, time: string) {
   if (!date || !time) return "";
@@ -45,9 +43,10 @@ export function estimateFee(
   start: string,
   end: string,
   rate: number,
+  returnDate = date,
 ) {
   const amount = Math.ceil(
-    ((new Date(localISO(date, end)).getTime() -
+    ((new Date(localISO(returnDate, end)).getTime() -
       new Date(localISO(date, start)).getTime()) /
       3600000) *
       rate,

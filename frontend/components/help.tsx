@@ -23,7 +23,7 @@ export default function Help() {
   return (
     <div className="help-page">
       <div className="page-intro">
-        <div className="eyebrow">Knitwork</div>
+        <div className="eyebrow">Common</div>
         <h1>{t("help")}</h1>
         <p>{t("help_intro")}</p>
       </div>

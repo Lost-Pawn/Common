@@ -15,7 +15,8 @@ import {
   ErrorBox,
   Field,
   Icon,
-  Machine,
+  ResourceArt,
+  CollectionScene,
   Modal,
   Status,
   TextContent,
@@ -38,6 +39,19 @@ export default function Resources({
   const { t, locale, notify } = useUI();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [mine, setMine] = useState(false);
+  const [free, setFree] = useState(false);
+  const categories = [
+    "tools",
+    "electronics",
+    "outdoors",
+    "books",
+    "home",
+    "spaces",
+    "creative",
+    "other",
+  ];
+  const [returnDate, setReturnDate] = useState(nextDate());
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<Resource | null>(null);
   const [creating, setCreating] = useState(false);
@@ -65,6 +79,8 @@ export default function Resources({
     (r) =>
       (category === "all" || r.category === category) &&
       (!ready || !r.maintenance) &&
+      (!mine || r.owner_id === user.id) &&
+      (!free || r.hourly_rate === 0) &&
       (r.name + " " + r.location + " " + r.description)
         .toLowerCase()
         .includes(search.toLowerCase()),
@@ -80,7 +96,7 @@ export default function Resources({
         resource_id: selected.id,
         borrower_id: Number(f.get("borrower") || user.id),
         starts_at: localISO(date, start),
-        ends_at: localISO(date, end),
+        ends_at: localISO(returnDate, end),
         purpose: f.get("purpose"),
         assisted: f.get("assisted") === "on",
         accepted: f.get("accepted") === "on",
@@ -136,27 +152,16 @@ export default function Resources({
             {t("review_needed")}
           </span>
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="thread-ring" />
-          <div className="thread-ring second" />
-          <div className="hero-spool">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="hero-tag">K</div>
-        </div>
+        <CollectionScene />
       </section>
       <div className="section-title">
         <h2>{t("explore")}</h2>
-        {isStaff(user.role) && (
+        {
           <button className="primary" onClick={() => setCreating(true)}>
             <Icon name="plus" />
             {t("add_resource")}
           </button>
-        )}
+        }
       </div>
       <div className="filters">
         <label className="search">
@@ -169,7 +174,7 @@ export default function Resources({
           />
         </label>
         <div className="tabs">
-          {["all", "embroidery", "sewing", "cutting"].map((c) => (
+          {["all", ...categories].map((c) => (
             <button
               key={c}
               className={category === c ? "selected" : ""}
@@ -188,17 +193,41 @@ export default function Resources({
           {t("available")}
         </label>
       </div>
+      <div className="catalog-tools">
+        <span className="result-count">
+          {filtered.length} {t("listings")}
+        </span>
+        <label className="check-inline">
+          <input
+            type="checkbox"
+            checked={mine}
+            onChange={(e) => setMine(e.target.checked)}
+          />
+          {t("my_listings")}
+        </label>
+        <label className="check-inline">
+          <input
+            type="checkbox"
+            checked={free}
+            onChange={(e) => setFree(e.target.checked)}
+          />
+          {t("free_only")}
+        </label>
+      </div>
       <div className="resource-grid">
         {filtered.map((r) => (
           <article className="resource-card" key={r.id}>
             <div className={"resource-art " + r.category}>
               <span className="art-label">{t(r.category)}</span>
-              <Machine category={r.category} />
+              <ResourceArt category={r.category} />
             </div>
             <div className="resource-body">
               <Status value={r.maintenance ? "maintenance" : "available"} />
               <h3>{r.name}</h3>
-              <p className="location">{r.location}</p>
+              <p className="location">
+                <Icon name="pin" size={14} />
+                {r.location}
+              </p>
               <div className="resource-meta">
                 <span>
                   <Icon name="clock" size={16} />
@@ -212,8 +241,14 @@ export default function Resources({
               </div>
               <div className="card-bottom">
                 <span className="price">
-                  ₹{r.hourly_rate}
-                  <small> / {t("hour")}</small>
+                  {r.hourly_rate === 0 ? (
+                    t("free")
+                  ) : (
+                    <>
+                      ₹{r.hourly_rate}
+                      <small> / {t("hour")}</small>
+                    </>
+                  )}
                 </span>
                 <button
                   className="text-button"
@@ -233,7 +268,13 @@ export default function Resources({
       {!filtered.length && <div className="empty">{t("no_results")}</div>}
       {selected && (
         <Modal title={selected.name} onClose={close}>
+          <div className="detail-art resource-art">
+            <ResourceArt category={selected.category} />
+          </div>
           <div className="detail-intro">
+            <p className="eyebrow">
+              {t("shared_by")} {selected.owner_name}
+            </p>
             <Status
               value={selected.maintenance ? "maintenance" : "available"}
             />
@@ -268,7 +309,15 @@ export default function Resources({
           <TextContent text={selected.rules} />
           <div className="notice">
             <h3>{t("eligibility")}</h3>
-            <p>{t(user.verified ? "verified" : "unverified")}</p>
+            <p>
+              {t(
+                selected.training || selected.operator_policy !== "none"
+                  ? user.verified
+                    ? "verified"
+                    : "unverified"
+                  : "open_access",
+              )}
+            </p>
             <p>
               {t("training")}: {selected.training || t("none")}{" "}
               {selected.training &&
@@ -316,7 +365,11 @@ export default function Resources({
                     type="date"
                     required
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      if (returnDate < e.target.value)
+                        setReturnDate(e.target.value);
+                    }}
                     min={selected.available_from}
                     max={selected.available_to}
                   />
@@ -327,6 +380,16 @@ export default function Resources({
                     required
                     value={start}
                     onChange={(e) => setStart(e.target.value)}
+                  />
+                </Field>
+                <Field label={t("return_date")}>
+                  <input
+                    type="date"
+                    required
+                    value={returnDate}
+                    min={date}
+                    max={selected.available_to}
+                    onChange={(e) => setReturnDate(e.target.value)}
                   />
                 </Field>
                 <Field label={t("end")}>
@@ -370,7 +433,14 @@ export default function Resources({
               <div className="estimate">
                 {t("estimate")}{" "}
                 <strong>
-                  ₹{estimateFee(date, start, end, selected.hourly_rate)}
+                  ₹
+                  {estimateFee(
+                    date,
+                    start,
+                    end,
+                    selected.hourly_rate,
+                    returnDate,
+                  )}
                 </strong>
               </div>
               <ErrorBox error={error} />
@@ -421,7 +491,7 @@ export default function Resources({
             </Field>
             <Field label={t("category")}>
               <select name="category">
-                {["embroidery", "sewing", "cutting"].map((c) => (
+                {categories.map((c) => (
                   <option key={c} value={c}>
                     {t(c)}
                   </option>
@@ -437,28 +507,32 @@ export default function Resources({
             <Field label={t("rules")}>
               <textarea name="rules" required maxLength={2000} />
             </Field>
-            <div className="form-grid">
-              <Field label={t("training")}>
-                <input name="training" />
-              </Field>
-              <Field label={t("assistance")}>
-                <select name="operator_policy">
-                  {["none", "optional", "required"].map((v) => (
-                    <option key={v} value={v}>
-                      {t(v)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+            <details className="advanced-settings">
+              <summary>{t("specialist_settings")}</summary>
+              <div className="form-grid">
+                <Field label={t("training")}>
+                  <input name="training" />
+                </Field>
+                <Field label={t("assistance")}>
+                  <select name="operator_policy">
+                    {["none", "optional", "required"].map((v) => (
+                      <option key={v} value={v}>
+                        {t(v)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            </details>
+            <p className="muted">{t("loan_hint")}</p>
             <div className="form-grid">
               {[
-                ["hourly_rate", "estimate", 60],
-                ["deposit", "deposit", 300],
-                ["max_hours", "session_limit", 4],
-                ["weekly_hours", "weekly", 8],
-                ["open_hour", "start", 8],
-                ["close_hour", "end", 20],
+                ["hourly_rate", "hourly_rate", 0],
+                ["deposit", "deposit", 0],
+                ["max_hours", "session_limit", 168],
+                ["weekly_hours", "weekly", 168],
+                ["open_hour", "start", 0],
+                ["close_hour", "end", 24],
                 ["buffer_minutes", "buffer", 30],
               ].map(([name, key, val]) => (
                 <Field key={name} label={t(String(key))}>
@@ -467,7 +541,24 @@ export default function Resources({
                     name={String(name)}
                     defaultValue={val}
                     required
-                    min={0}
+                    min={
+                      ["max_hours", "weekly_hours", "close_hour"].includes(
+                        String(name),
+                      )
+                        ? 1
+                        : 0
+                    }
+                    max={
+                      ["max_hours", "weekly_hours"].includes(String(name))
+                        ? 168
+                        : name === "open_hour"
+                          ? 23
+                          : name === "close_hour"
+                            ? 24
+                            : name === "buffer_minutes"
+                              ? 180
+                              : undefined
+                    }
                   />
                 </Field>
               ))}

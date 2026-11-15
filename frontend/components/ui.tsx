@@ -58,6 +58,19 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="m14 6 4-3 3 3-3 4-4-1-9 12-3-3L14 9z" />
       </>
     ),
+    sun: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2" />
+      </>
+    ),
+    moon: <path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z" />,
+    pin: (
+      <>
+        <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" />
+        <circle cx="12" cy="10" r="2" />
+      </>
+    ),
     arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
     search: (
       <>
@@ -96,59 +109,145 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
     </svg>
   );
 }
-export function Machine({ category }: { category: string }) {
+export function ResourceArt({ category }: { category: string }) {
+  const artwork: Record<string, React.ReactNode> = {
+    tools: (
+      <>
+        <path
+          d="M82 60h132l15 20-15 28h-65l-8 45h-39l13-63H82z"
+          fill="var(--object)"
+        />
+        <path d="M82 62H57v28h25m172-20h-25v22h25l23-11zM157 62v45m10-37h35m-35 10h30M107 153h40v13H92v-13z" />
+        <path d="m114 116 28 4" />
+      </>
+    ),
+    creative: (
+      <>
+        <rect
+          x="64"
+          y="62"
+          width="192"
+          height="105"
+          rx="16"
+          fill="var(--object)"
+        />
+        <path d="m111 62 12-21h66l12 21M77 87h28m126-13h11" />
+        <circle cx="163" cy="114" r="43" fill="var(--drawing)" />
+        <circle cx="163" cy="114" r="31" />
+        <circle cx="163" cy="114" r="18" fill="var(--object)" />
+        <path d="M78 147h22" />
+      </>
+    ),
+    outdoors: (
+      <>
+        <path d="m49 165 87-126h54l85 126z" fill="var(--object)" />
+        <path
+          d="m136 39 63 126H49M136 39v126m0-82-41 82h83z"
+          fill="var(--drawing)"
+        />
+        <path d="M136 83v82M40 171h244M76 109l-33 54m194-54 43 54" />
+        <path d="M229 39v23m-11-11h22" strokeWidth="2" />
+      </>
+    ),
+    books: (
+      <>
+        <path d="m70 70 50-16 29 105-50 16z" fill="var(--object)" />
+        <path
+          d="m80 91 48-15m-33 69 46-15M160 55h35v115h-35z"
+          fill="var(--drawing)"
+        />
+        <path
+          d="M160 75h35m-35 75h35m15-98 32-7 25 120-32 7z"
+          fill="var(--object)"
+        />
+        <path d="m216 76 32-7m-16 77 32-7M57 178h224" />
+      </>
+    ),
+    electronics: (
+      <>
+        <path d="M71 73h172l18 25v61H57V98z" fill="var(--object)" />
+        <path d="M57 98h204M81 119h57m-57 10h57m-57 10h57m-65 21v9m169-9v9" />
+        <circle cx="206" cy="127" r="23" fill="var(--drawing)" />
+        <circle cx="206" cy="127" r="13" />
+        <path d="M93 84h60m-15-46 5 10m-27-4 3 10" strokeWidth="2" />
+      </>
+    ),
+    spaces: (
+      <>
+        <path d="M45 89h229v17H45z" fill="var(--object)" />
+        <path d="M65 107v66m187-66v66M94 106v47m129-47v47" />
+        <path d="M115 89V56h64v33" fill="var(--drawing)" />
+        <path d="M110 89h76m37-3V61m0 8-15-12m15 3 13-12" />
+        <path d="M201 74h24v14h-24z" fill="var(--object)" />
+      </>
+    ),
+    home: (
+      <>
+        <ellipse cx="159" cy="145" rx="90" ry="24" fill="var(--object)" />
+        <ellipse cx="159" cy="134" rx="90" ry="24" fill="var(--drawing)" />
+        <ellipse cx="159" cy="123" rx="90" ry="24" fill="var(--object)" />
+        <ellipse cx="159" cy="123" rx="58" ry="13" />
+        <path d="M106 73c0 27 13 32 30 32s30-5 30-32z" fill="var(--drawing)" />
+        <path d="M166 76c29-12 23 30-6 22M199 47v52m-8-50v14h16V49" />
+      </>
+    ),
+    other: (
+      <>
+        <path d="m72 80 88-37 87 37v80l-87 30-88-30z" fill="var(--object)" />
+        <path
+          d="m72 80 88 32 87-32m-87 32v78M115 60l89 34v31l-29 10v-30z"
+          fill="var(--drawing)"
+        />
+      </>
+    ),
+  };
   return (
     <svg
-      viewBox="0 0 320 170"
-      className="machine"
-      role="img"
-      aria-label={category}
+      className="resource-illustration"
+      viewBox="0 0 320 220"
+      aria-hidden="true"
     >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {category === "cutting" ? (
-          <>
-            <path d="M35 88 128 38l155 41-96 55z" fill="var(--drawing)" />
-            <path d="M35 88v37m248-46v47m-96 8v27M84 64l137 39M62 78l137 39M127 39l-6 59" />
-            <path d="m169 68 18 7-14 13-17-6z" />
-            <path d="m233 37-20 32m-8-13 18-5" />
-            <circle cx="237" cy="31" r="7" />
-            <circle cx="232" cy="45" r="7" />
-          </>
-        ) : (
-          <>
-            <path
-              d="M73 124V65c0-14 8-22 22-22h101c14 0 22 10 22 24v37h-43V81h-58v43z"
-              fill="var(--drawing)"
-            />
-            <path d="M54 126h202v17H54zM94 43V26h25v17M185 43V29h17v14M188 104v20m-10-8h20M217 79h18V58h-19" />
-            <circle cx="95" cy="73" r="13" />
-            <path d="M89 73h12m-6-6v12M137 55h38M139 62h25" />
-            {category === "embroidery" ? (
-              <>
-                <rect x="126" y="111" width="94" height="28" rx="10" />
-                <path d="m146 122 10-5 11 10 10-8 13 6m-30-74v28" />
-              </>
-            ) : (
-              <path d="m173 124 33 22h44m-15-84v44m-69 7h-23" />
-            )}
-          </>
-        )}
-      </g>
-      <path
-        d="M26 155h266"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity=".25"
+      <ellipse
+        cx="160"
+        cy="187"
+        rx="109"
+        ry="10"
+        fill="currentColor"
+        opacity=".06"
       />
+      <g
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="none"
+      >
+        {artwork[category] || artwork.other}
+      </g>
     </svg>
   );
 }
+export function CollectionScene() {
+  const { t } = useUI();
+  return (
+    <div className="collection-scene" aria-hidden="true">
+      <div className="scene-orbit" />
+      <div className="scene-card scene-books">
+        <ResourceArt category="books" />
+        <span>{t("books")}</span>
+      </div>
+      <div className="scene-card scene-camera">
+        <ResourceArt category="creative" />
+        <span>{t("creative")}</span>
+      </div>
+      <div className="scene-note">
+        <Icon name="arrow" size={18} />
+        {t("good_things")}
+      </div>
+    </div>
+  );
+}
+
 export function Field({
   label,
   children,

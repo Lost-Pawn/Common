@@ -8,7 +8,7 @@ import {
   ErrorBox,
   Field,
   Icon,
-  Machine,
+  CollectionScene,
   TextContent,
   UIContext,
 } from "@/components/ui";
@@ -23,6 +23,7 @@ import {
 import Help from "@/components/help";
 
 export default function Home() {
+  const [theme, setTheme] = useState("light");
   const [locale, setLocale] = useState<Locale>("en");
   const [user, setUser] = useState<User | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -50,12 +51,15 @@ export default function Home() {
     setResources(r);
     setBookings(b);
     setNotices(n);
-    if (isStaff(me.role)) setOperators(await api<Operator[]>("/operators"));
+    setOperators(await api<Operator[]>("/operators"));
     if (["manager", "admin"].includes(me.role))
       setMembers(await api<User[]>("/members"));
   }, []);
   useEffect(() => {
-    const saved = localStorage.getItem("knitwork-language");
+    const saved =
+      localStorage.getItem("common-language") ||
+      localStorage.getItem("knitwork-language");
+    setTheme(document.documentElement.dataset.theme || "light");
     if (saved && saved in languages) setLocale(saved as Locale);
     api<typeof config>("/config")
       .then(setConfig)
@@ -68,7 +72,7 @@ export default function Home() {
   }, [refresh]);
   useEffect(() => {
     document.documentElement.lang = locale;
-    localStorage.setItem("knitwork-language", locale);
+    localStorage.setItem("common-language", locale);
   }, [locale]);
   useEffect(() => {
     if (!toast) return;
@@ -112,6 +116,24 @@ export default function Home() {
       setBusy(false);
     }
   }
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("common-theme", next);
+    } catch {}
+  }
+  const themeSwitch = (
+    <button
+      className="icon-button theme-switch"
+      onClick={toggleTheme}
+      aria-label={t(theme === "dark" ? "light_theme" : "dark_theme")}
+      title={t(theme === "dark" ? "light_theme" : "dark_theme")}
+    >
+      <Icon name={theme === "dark" ? "sun" : "moon"} />
+    </button>
+  );
   const language = (
     <label className="language">
       <span className="sr-only">{t("language")}</span>
@@ -155,21 +177,21 @@ export default function Home() {
     >
       {loading ? (
         <div className="loading-screen">
-          <div className="brand-mark">k</div>
+          <div className="brand-mark">c</div>
           <p>{t("loading")}</p>
         </div>
       ) : !user ? (
         <div className="auth-page">
           <section className="auth-story">
             <div className="brand">
-              <div className="brand-mark">k</div>knitwork<span>®</span>
+              <div className="brand-mark">c</div>common<span>•</span>
             </div>
             <div className="auth-copy">
               <span className="eyebrow">{t("shared_centre")}</span>
               <h1>{t("login_intro")}</h1>
               <p>{t("intro")}</p>
               <div className="auth-machine">
-                <Machine category="embroidery" />
+                <CollectionScene />
               </div>
               <div className="auth-footnote">
                 <Icon name="check" />
@@ -178,7 +200,10 @@ export default function Home() {
             </div>
           </section>
           <section className="auth-form-side">
-            <div className="auth-top">{language}</div>
+            <div className="auth-top">
+              {themeSwitch}
+              {language}
+            </div>
             <div className="auth-form">
               <h2>{t(register ? "register" : "login")}</h2>
               <p className="muted">{t("shared_centre")}</p>
@@ -194,7 +219,7 @@ export default function Home() {
                       />
                     </Field>
                     <Field label={t("business")}>
-                      <input name="business" required maxLength={150} />
+                      <input name="business" maxLength={150} />
                     </Field>
                   </>
                 )}
@@ -251,8 +276,8 @@ export default function Home() {
                           setError(null);
                           try {
                             await api("/auth/login", "POST", {
-                              email: account + "@knitwork.test",
-                              password: "KnitworkDemo2026!",
+                              email: account + "@common.test",
+                              password: "CommonDemo2026!",
                             });
                             await refresh();
                           } catch (err) {
@@ -275,14 +300,20 @@ export default function Home() {
         <div className="app-shell">
           <aside className="sidebar">
             <button className="brand" onClick={() => navigate("explore")}>
-              <div className="brand-mark">k</div>knitwork<span>®</span>
+              <div className="brand-mark">c</div>common<span>•</span>
             </button>
             <div className="workspace-label">{t("shared_centre")}</div>
-            <nav aria-label="Knitwork">
+            <nav aria-label="Common">
               {[
                 "explore",
                 "bookings",
-                ...(isStaff(user.role) ? ["centre", "operators"] : []),
+                "centre",
+                ...(isStaff(user.role) ||
+                resources.some(
+                  (r) => r.owner_id === user.id && r.operator_policy !== "none",
+                )
+                  ? ["operators"]
+                  : []),
                 ...(["manager", "admin"].includes(user.role)
                   ? ["members"]
                   : []),
@@ -317,10 +348,7 @@ export default function Home() {
                   <small>{t(user.role)}</small>
                 </div>
               </div>
-              <button
-                className="nav-item"
-                onClick={logout}
-              >
+              <button className="nav-item" onClick={logout}>
                 <Icon name="logout" />
                 {t("logout")}
               </button>
@@ -329,10 +357,11 @@ export default function Home() {
           <div className="workspace">
             <header className="topbar">
               <div className="breadcrumb">
-                Knitwork <span>/</span>
+                Common <span>/</span>
                 <strong>{t(page)}</strong>
               </div>
               <div className="topbar-actions">
+                {themeSwitch}
                 {language}
                 <button
                   className="icon-button notification-button"
@@ -345,7 +374,7 @@ export default function Home() {
                 <div className="avatar small">{user.name[0]}</div>
               </div>
             </header>
-            <main id="main">
+            <main id="main" key={page}>
               <ErrorBox error={error} />
               {page === "explore" && (
                 <Resources
@@ -426,7 +455,7 @@ export default function Home() {
               )}
             </main>
             <footer>
-              Knitwork <span>·</span> {t("timezone")}
+              Common <span>·</span> {t("timezone")}
             </footer>
           </div>
         </div>
