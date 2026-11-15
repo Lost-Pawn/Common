@@ -1,33 +1,39 @@
 # Validation record
 
-Verified on 28 October 2026. Application code includes commit `816290d`; subsequent commits update documentation. The final locally built image is `dc9047efd090`.
+Verified on 15 November 2026 against application commit `e914627`. Subsequent documentation commits record these results.
 
 ## Automated checks
 
 - Next.js production build and TypeScript check: passed.
-- Go unit and integration tests, including the race detector: passed.
+- Go unit and PostgreSQL integration tests with `go test -race ./...`: passed after the final demo qualification update.
 - Go static analysis with `go vet ./...`: passed.
-- Disposable PostgreSQL Docker Compose integration environment: passed with exit code 0.
-- Locale dictionary coverage: six locales with 145 matching non-empty keys each.
-- Multi-stage Docker build: passed; app and PostgreSQL health checks passed.
+- Disposable PostgreSQL Docker Compose integration environment: passed.
+- Locale dictionary coverage: six locales with 167 matching non-empty keys each.
+- Multi-stage Docker build: passed; `common-app-1` and `common-db-1` both healthy.
 
-The integration suite covers verified owner listing, its audit event, the full supervised sharing lifecycle, access control, private photo protection, competing approvals, operator conflicts, queue exceptions, shared-group quotas, revoked eligibility, extensions, damage holds, reminders, session revocation and help provider fallback. Reproduction commands are in the README.
+The integration suite covers member-owned listings, ownership-based access control, ordinary borrowing by unverified members, specialist eligibility, overnight loans, return-date availability and quotas across calendar weeks. Existing coverage includes the supervised sharing lifecycle, private condition photos, competing approvals, operator conflicts, queue exceptions, shared-group quotas, revoked eligibility, extensions, damage holds, reminders, session revocation and help-provider fallback. Reproduction commands are in the README.
 
-## Running-container and persistence checks
+## Browser checks
 
-A direct HTTP test against the Docker service completed a fictional request, supervised approval, photo check-in, photo return and manager confirmation. Booking 1 reached `completed`, with two condition records and five audit events. No real equipment was operated. Test images visibly say `SYNTHETIC QA FIXTURE`.
+- Published a free general-purpose listing, “Weekend board games,” as a normal member, with category `other` and a 168-hour borrowing limit.
+- Verified the listing appears under My listings and checked free-only filtering.
+- Verified light and dark themes, including persistence after reload, and selected the Hindi interface.
+- Inspected sign-in, discovery and dashboard screens visually.
+- Checked the mobile layout at approximately 390 × 844 pixels: no horizontal page overflow; profile-menu logout worked.
+- Corrected the entrance animation so fixed dialogs remain anchored to the viewport and rebuilt the frontend.
 
-The app and database containers were both recreated with `docker compose up -d --force-recreate --wait`, preserving the named database volume. Before-and-after checks found identical counts and content digests for users (6), resources (3), bookings (1), conditions (2) and audit events (5). After restart, both private images were downloaded through authenticated HTTP requests and retained the same SHA-256 hash:
+## Data preservation
 
-`7cec95c9a2155bd728ce1128f1cc9c1059336295cc5fc492c8305fbebc0f1208`
+The existing named PostgreSQL volume was retained during the Common container rebuild. The final before-and-after comparison found identical counts and content digests for the existing booking (1) and condition records (2). Both containers were healthy afterward. Original resources and sharing history were retained alongside the new general-purpose demo listings.
 
-The completed booking remained accessible, and `/api/health` returned `{"status":"ok"}`. This verifies container recreation with the volume retained; it does not verify disaster recovery or a backup restore.
+This checks preservation during the local rebuild with the volume retained; it does not verify disaster recovery or a backup restore. See `UPGRADE.md` for compatibility settings for existing installations.
 
-## Outstanding verification
+## Documents and remaining verification
 
-- Interactive and visual browser testing was blocked by the local browser-access permission decision. Mobile logout was corrected through source review and passed compilation, but has not been exercised in a browser.
-- Live model generation and translation require a selected external provider and credentials. Mocked success and failure paths passed.
-- Render deployment, public judge access and production credentials have not been exercised.
+The Common SRS and implementation report were rendered and all three pages of each document were visually inspected.
+
+- Live model generation and translation require external-provider credentials; live-provider calls have not been verified. Mocked success and failure paths passed.
+- Render deployment, public access and production credentials have not been exercised.
 - Native-speaker translation review, real-user testing and formal accessibility checks remain outstanding.
 
-The SRS and implementation report were rendered and visually inspected before delivery. They should not be used to imply that every acceptance criterion or production-readiness task has been completed.
+These results describe the implemented and tested scope, rather than certification of production readiness.
