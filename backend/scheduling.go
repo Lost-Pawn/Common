@@ -79,7 +79,7 @@ func checkAllocation(ctx context.Context, tx pgx.Tx, p resourcePolicy, b booking
 	if e := tx.QueryRow(ctx, "SELECT verified,suspended,qualifications FROM users WHERE id=$1 FOR UPDATE", b.Borrower).Scan(&verified, &suspended, &quals); e != nil {
 		return e
 	}
-	if !verified || suspended {
+	if suspended || (!verified && (p.Training != "" || p.OperatorPolicy != "none")) {
 		return fmt.Errorf("verification_required")
 	}
 	needsOperator := p.OperatorPolicy == "required" || b.Assisted
@@ -121,7 +121,7 @@ func checkAllocation(ctx context.Context, tx pgx.Tx, p resourcePolicy, b booking
 	}
 	// Only an eligible earlier request blocks queue order. A manager can document an exceptional allocation.
 	var earlier int
-	if e := tx.QueryRow(ctx, `SELECT count(*) FROM bookings q JOIN users u ON u.id=q.borrower_id WHERE q.resource_id=$1 AND q.id<>$2 AND q.status='waitlisted' AND q.starts_at<$4 AND q.busy_until>$3 AND (q.created_at,q.id)<(SELECT created_at,id FROM bookings WHERE id=$2) AND u.verified AND NOT u.suspended AND ($5='' OR $5=ANY(u.qualifications) OR (q.assisted AND $6<>'none'))`, b.Resource, b.ID, b.Start, busy, p.Training, p.OperatorPolicy).Scan(&earlier); e != nil {
+	if e := tx.QueryRow(ctx, `SELECT count(*) FROM bookings q JOIN users u ON u.id=q.borrower_id WHERE q.resource_id=$1 AND q.id<>$2 AND q.status='waitlisted' AND q.starts_at<$4 AND q.busy_until>$3 AND (q.created_at,q.id)<(SELECT created_at,id FROM bookings WHERE id=$2) AND (u.verified OR ($5='' AND $6='none')) AND NOT u.suspended AND ($5='' OR $5=ANY(u.qualifications) OR (q.assisted AND $6<>'none'))`, b.Resource, b.ID, b.Start, busy, p.Training, p.OperatorPolicy).Scan(&earlier); e != nil {
 		return e
 	}
 	if earlier > 0 && (!override || len(reason) < 5) {

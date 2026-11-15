@@ -104,38 +104,31 @@ func TestFullSharingLifecycle(t *testing.T) {
 	_ = png.Encode(&imageBuf, image.NewRGBA(image.Rect(0, 0, 12, 12)))
 	photo := "data:image/png;base64," + base64.StdEncoding.EncodeToString(imageBuf.Bytes())
 	operator := int64(1)
-	t.Run("verified owners can list equipment", func(t *testing.T) {
-		owner := login("owner@knitwork.test")
-		listing := ResourceInput{
-			Name: "Shared finishing table", Category: "cutting", Description: "A table for finishing small garment batches",
-			Location: "Sakhi Garment Centre", Rules: "Keep the work surface clear", OperatorPolicy: "none",
-			MaxHours: 3, WeeklyHours: 6, OpenHour: 8, CloseHour: 20,
-			AvailableFrom: start.Format("2006-01-02"), AvailableTo: start.AddDate(0, 1, 0).Format("2006-01-02"),
-		}
-		setVerified := func(verified bool) {
-			t.Helper()
-			if _, err := db.Exec(ctx, "UPDATE users SET verified=$1 WHERE email='owner@knitwork.test'", verified); err != nil {
-				t.Fatal(err)
-			}
-		}
-		setVerified(false)
-		defer setVerified(true)
-		body := must(owner, "POST", "/api/resources", listing, 403)
-		if !bytes.Contains(body, []byte("verification_required")) {
-			t.Fatalf("missing owner verification explanation: %s", body)
-		}
-		setVerified(true)
+	t.Run("members list and manage their own resources", func(t *testing.T) {
+		listing := ResourceInput{Name: "Weekend reading collection", Category: "books", Description: "Books to borrow",
+			Location: "Pune", Rules: "Return in good condition", OperatorPolicy: "none", MaxHours: 4, WeeklyHours: 8,
+			OpenHour: 8, CloseHour: 20, AvailableFrom: start.Format("2006-01-02"), AvailableTo: start.AddDate(0, 1, 0).Format("2006-01-02")}
 		var result map[string]int64
-		json.Unmarshal(must(owner, "POST", "/api/resources", listing, 201), &result)
+		json.Unmarshal(must(asha, "POST", "/api/resources", listing, 201), &result)
+		resource := result["id"]
+		id := request(ravi, resource, start, false)
+		act(ravi, id, ActionInput{Action: "approve", Reason: "Cannot approve another owner's listing"}, 403)
+		act(asha, id, ActionInput{Action: "approve", Reason: "Happy to share these books"}, 200)
+		body := must(asha, "GET", "/api/bookings", nil, 200)
+		if !bytes.Contains(body, []byte("Weekend reading collection")) {
+			t.Fatal("owner cannot see incoming booking")
+		}
+		must(ravi, "PATCH", fmt.Sprintf("/api/resources/%d", resource), map[string]any{"maintenance": true, "reason": "Not my listing"}, 403)
+		must(asha, "PATCH", fmt.Sprintf("/api/resources/%d", resource), map[string]any{"maintenance": true, "reason": "Taking a break"}, 200)
 		var listed int
-		if err := db.QueryRow(ctx, "SELECT count(*) FROM audit WHERE resource_id=$1 AND action='resource_listed'", result["id"]).Scan(&listed); err != nil || listed != 1 {
-			t.Fatalf("resource listing audit: count=%d error=%v", listed, err)
+		if err := db.QueryRow(ctx, "SELECT count(*) FROM audit WHERE resource_id=$1 AND action='resource_listed'", resource).Scan(&listed); err != nil || listed != 1 {
+			t.Fatal("missing listing audit")
 		}
 	})
 	t.Run("authentication and role boundaries", func(t *testing.T) {
 		must(nil, "GET", "/api/resources", nil, 401)
 		must(asha, "GET", "/api/members", nil, 403)
-		must(asha, "POST", "/api/resources", ResourceInput{}, 403)
+		must(asha, "POST", "/api/resources", ResourceInput{}, 400)
 		must(nil, "POST", "/api/auth/register", map[string]any{"name": "Mallory", "email": "mallory@example.test", "password": "VeryLongPassword", "role": "admin"}, 400)
 		r := httptest.NewRequest("POST", "/api/auth/logout", strings.NewReader("{}"))
 		r.Header.Set("Content-Type", "application/json")
@@ -227,7 +220,7 @@ func TestFullSharingLifecycle(t *testing.T) {
 		body := must(nil, "POST", "/api/auth/register", map[string]string{"name": "New Member", "email": "new@example.test", "password": "NewMemberPassword", "business": "New Tailoring"}, 201)
 		var u User
 		json.Unmarshal(body, &u)
-		b := must(manager, "POST", "/api/bookings", BookingInput{ResourceID: 3, BorrowerID: u.ID, StartsAt: start.Add(6 * time.Hour), EndsAt: start.Add(7 * time.Hour), Purpose: "Assisted request recorded", Accepted: true}, 201)
+		b := must(manager, "POST", "/api/bookings", BookingInput{ResourceID: 1, BorrowerID: u.ID, StartsAt: start.Add(6 * time.Hour), EndsAt: start.Add(7 * time.Hour), Purpose: "Assisted request recorded", Accepted: true}, 201)
 		var id map[string]int64
 		json.Unmarshal(b, &id)
 		act(manager, id["id"], ActionInput{Action: "approve", Reason: "Verification still pending"}, 409)
@@ -268,9 +261,9 @@ func TestFullSharingLifecycle(t *testing.T) {
 	t.Run("revoked eligibility prevents checkin", func(t *testing.T) {
 		id := request(asha, 3, start.Add(2*time.Hour), false)
 		act(manager, id, ActionInput{Action: "approve", Reason: "Membership verified initially"}, 200)
-		_, _ = db.Exec(ctx, "UPDATE users SET verified=false WHERE id=$1", ashaUser.ID)
+		_, _ = db.Exec(ctx, "UPDATE users SET suspended=true WHERE id=$1", ashaUser.ID)
 		act(manager, id, ActionInput{Action: "checkin", Reason: "Try early handover after revocation", Note: "Equipment condition checked", Image: photo, Checklist: true}, 409)
-		_, _ = db.Exec(ctx, "UPDATE users SET verified=true WHERE id=$1", ashaUser.ID)
+		_, _ = db.Exec(ctx, "UPDATE users SET suspended=false WHERE id=$1", ashaUser.ID)
 		act(manager, id, ActionInput{Action: "cancel", Reason: "Revocation test completed"}, 200)
 	})
 	t.Run("operator cannot be allocated to two machines", func(t *testing.T) {

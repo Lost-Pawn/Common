@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -16,22 +17,18 @@ func (a *App) resources(w http.ResponseWriter, r *http.Request) {
 	}
 	respond(w, 200, items)
 }
+func validCategory(category string) bool {
+	return slices.Contains([]string{"tools", "electronics", "outdoors", "books", "home", "spaces", "creative", "other", "embroidery", "sewing", "cutting"}, category)
+}
+
 func validResource(in ResourceInput) bool {
 	_, e1 := time.Parse("2006-01-02", in.AvailableFrom)
 	_, e2 := time.Parse("2006-01-02", in.AvailableTo)
-	return len(strings.TrimSpace(in.Name)) >= 3 && len(in.Name) <= 120 && len(in.Description) <= 2000 && len(in.Location) > 0 && len(in.Rules) > 0 && len(in.Rules) <= 2000 && in.MaxHours >= 1 && in.MaxHours <= 12 && in.WeeklyHours >= 1 && in.WeeklyHours <= 60 && in.OpenHour >= 0 && in.CloseHour <= 24 && in.CloseHour > in.OpenHour && in.BufferMinutes >= 0 && in.BufferMinutes <= 180 && in.HourlyRate >= 0 && in.Deposit >= 0 && e1 == nil && e2 == nil && in.AvailableTo >= in.AvailableFrom && (in.OperatorPolicy == "none" || in.OperatorPolicy == "optional" || in.OperatorPolicy == "required") && (in.Category == "embroidery" || in.Category == "sewing" || in.Category == "cutting")
+	return len(strings.TrimSpace(in.Name)) >= 3 && len(in.Name) <= 120 && len(in.Description) <= 2000 && len(in.Location) > 0 && len(in.Rules) > 0 && len(in.Rules) <= 2000 && in.MaxHours >= 1 && in.MaxHours <= 12 && in.WeeklyHours >= 1 && in.WeeklyHours <= 60 && in.OpenHour >= 0 && in.CloseHour <= 24 && in.CloseHour > in.OpenHour && in.BufferMinutes >= 0 && in.BufferMinutes <= 180 && in.HourlyRate >= 0 && in.Deposit >= 0 && e1 == nil && e2 == nil && in.AvailableTo >= in.AvailableFrom && (in.OperatorPolicy == "none" || in.OperatorPolicy == "optional" || in.OperatorPolicy == "required") && validCategory(in.Category)
 }
 func (a *App) createResource(w http.ResponseWriter, r *http.Request) {
 	u := current(r)
-	if !staff(u) && u.Role != "owner" {
-		fail(w, 403, "forbidden", "Only owners or centre staff can list equipment.")
-		return
-	}
-	// Assigning an owner role does not replace the centre's verification step.
-	if u.Role == "owner" && !u.Verified {
-		fail(w, 403, "verification_required", "Ask a centre manager to verify your owner profile before listing equipment.")
-		return
-	}
+	// Listing ownership belongs to its creator, independently of staff roles.
 	var in ResourceInput
 	if !decode(w, r, &in) {
 		return
@@ -120,7 +117,7 @@ func (a *App) maintenance(w http.ResponseWriter, r *http.Request) {
 	respond(w, 200, map[string]bool{"ok": true})
 }
 func (a *App) operators(w http.ResponseWriter, r *http.Request) {
-	if !staff(current(r)) && current(r).Role != "owner" {
+	if current(r) == nil {
 		fail(w, 403, "forbidden", "Only centre staff can view operator scheduling.")
 		return
 	}

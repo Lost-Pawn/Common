@@ -74,7 +74,7 @@ type userKey struct{}
 
 func current(r *http.Request) *User  { u, _ := r.Context().Value(userKey{}).(*User); return u }
 func staff(u *User) bool             { return u != nil && (u.Role == "manager" || u.Role == "admin") }
-func owns(u *User, owner int64) bool { return staff(u) || (u.Role == "owner" && u.ID == owner) }
+func owns(u *User, owner int64) bool { return staff(u) || (u != nil && u.ID == owner) }
 func respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

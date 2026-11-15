@@ -8,7 +8,7 @@ import (
 
 func (a *App) bookings(w http.ResponseWriter, r *http.Request) {
 	u := current(r)
-	items, e := listJSON(r.Context(), a.db, `SELECT to_jsonb(b)||jsonb_build_object('resource_name',r.name,'borrower_name',u.name,'owner_id',r.owner_id,'operator_name',o.name,'category',r.category,'queue_position',(SELECT count(*) FROM bookings q WHERE q.resource_id=b.resource_id AND q.status='waitlisted' AND(q.created_at,q.id)<=(b.created_at,b.id))) FROM bookings b JOIN resources r ON r.id=b.resource_id JOIN users u ON u.id=b.borrower_id LEFT JOIN operators o ON o.id=b.operator_id WHERE $1 OR b.borrower_id=$2 OR ($3 AND r.owner_id=$2) ORDER BY b.created_at DESC`, staff(u), u.ID, u.Role == "owner")
+	items, e := listJSON(r.Context(), a.db, `SELECT to_jsonb(b)||jsonb_build_object('resource_name',r.name,'borrower_name',u.name,'owner_id',r.owner_id,'operator_name',o.name,'category',r.category,'queue_position',(SELECT count(*) FROM bookings q WHERE q.resource_id=b.resource_id AND q.status='waitlisted' AND(q.created_at,q.id)<=(b.created_at,b.id))) FROM bookings b JOIN resources r ON r.id=b.resource_id JOIN users u ON u.id=b.borrower_id LEFT JOIN operators o ON o.id=b.operator_id WHERE $1 OR b.borrower_id=$2 OR r.owner_id=$2 ORDER BY b.created_at DESC`, staff(u), u.ID)
 	if e != nil {
 		fail(w, 500, "server_error", "Unable to load bookings.")
 		return

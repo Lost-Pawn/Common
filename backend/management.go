@@ -209,7 +209,7 @@ func (a *App) readNotifications(w http.ResponseWriter, r *http.Request) {
 }
 func (a *App) dashboard(w http.ResponseWriter, r *http.Request) {
 	u := current(r)
-	if !staff(u) && u.Role != "owner" {
+	if u == nil {
 		fail(w, 403, "forbidden", "This view is for centre staff.")
 		return
 	}
