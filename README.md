@@ -29,14 +29,14 @@ Members manage requests for their own listings. Everyday resources support ordin
 Install Docker with Docker Compose, then run:
 
 ```bash
-git clone https://github.com/Lost-Pawn/Knitwork.git
-cd Knitwork
+git clone https://github.com/Lost-Pawn/Common.git
+cd Common
 docker compose up --build -d --wait
 ```
 
 Open [Common at localhost:8080](http://localhost:8080). Check service health at [localhost:8080/api/health](http://localhost:8080/api/health).
 
-The product is named Common; the GitHub repository currently retains the name Knitwork. For an existing installation, follow the [upgrade guide](docs/UPGRADE.md) before changing database or volume settings.
+Upgrading from Knitwork? Follow the [upgrade guide](docs/UPGRADE.md) before changing database or volume settings.
 
 ### Demo accounts
 
