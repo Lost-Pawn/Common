@@ -10,7 +10,7 @@ import (
 
 func idFrom(r *http.Request) int64 { id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64); return id }
 func (a *App) resources(w http.ResponseWriter, r *http.Request) {
-	items, e := listJSON(r.Context(), a.db, `SELECT to_jsonb(r)||jsonb_build_object('owner_name',u.name) FROM resources r JOIN users u ON u.id=r.owner_id ORDER BY r.id`)
+	items, e := listJSON(r.Context(), a.db, `SELECT to_jsonb(r)||jsonb_build_object('owner_name',u.name) FROM resources r JOIN users u ON u.id=r.owner_id ORDER BY r.id DESC`)
 	if e != nil {
 		fail(w, 500, "server_error", "Unable to load resources.")
 		return

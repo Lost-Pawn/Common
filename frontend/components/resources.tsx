@@ -231,12 +231,20 @@ export default function Resources({
               <div className="resource-meta">
                 <span>
                   <Icon name="clock" size={16} />
-                  {r.max_hours} {t("hours")}
+                  {r.max_hours >= 24 && r.max_hours % 24 === 0 ? (
+                    <>
+                      {r.max_hours / 24} {t("days")}
+                    </>
+                  ) : (
+                    <>
+                      {r.max_hours} {t("hours")}
+                    </>
+                  )}
                 </span>
                 <span>
                   {r.operator_policy === "required"
                     ? t("operator_required")
-                    : t(r.training ? "training" : "none")}
+                    : t(r.training ? "training" : "everyday")}
                 </span>
               </div>
               <div className="card-bottom">

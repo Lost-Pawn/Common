@@ -53,7 +53,7 @@ request|Request a booking|बुकिंग का अनुरोध करे
 estimate|Estimated usage fee|अनुमानित शुल्क|अंदाजे शुल्क|আনুমানিক খরচ|மதிப்பிடப்பட்ட கட்டணம்|అంచనా రుసుము
 deposit|Deposit|जमा राशि|अनामत रक्कम|জামানত|வைப்புத்தொகை|డిపాజిట్
 weekly|Weekly hours limit|साप्ताहिक घंटे की सीमा|साप्ताहिक तास मर्यादा|সাপ্তাহিক ঘণ্টার সীমা|வார நேர வரம்பு|వారపు గంటల పరిమితి
-session_limit|Maximum session|अधिकतम सत्र|कमाल सत्र|সর্বাধিক সেশন|அதிகபட்ச அமர்வு|గరిష్ట సెషన్
+session_limit|Maximum loan in hours|अधिकतम सत्र|कमाल सत्र|সর্বাধিক সেশন|அதிகபட்ச அமர்வு|గరిష్ట సెషన్
 opening|Operating hours|कार्य समय|कामकाजाची वेळ|কাজের সময়|இயங்கும் நேரம்|పని వేళలు
 buffer|Turnaround time in minutes|तैयारी का समय मिनट में|तयारीचा वेळ मिनिटांत|প্রস্তুতির সময় মিনিটে|தயாரிப்பு நேரம் நிமிடங்களில்|సిద్ధం చేసే సమయం నిమిషాల్లో
 occupied|Reserved periods including turnaround|आरक्षित समय और तैयारी|आरक्षित वेळ व तयारी|সংরক্ষিত সময় ও প্রস্তুতি|ஒதுக்கப்பட்ட மற்றும் தயாரிப்பு நேரம்|రిజర్వు చేసిన మరియు సిద్ధం చేసే సమయం
@@ -173,6 +173,8 @@ loan_hint|Set hours from 0 to 24 for overnight loans. Duration limits are in hou
 light_theme|Switch to light theme|हल्का थीम|उजळ थीम|হালকা থিম|ஒளி தோற்றம்|లైట్ థీమ్
 dark_theme|Switch to dark theme|गहरा थीम|गडद थीम|গাঢ় থিম|இருள் தோற்றம்|డార్క్ థీమ్
 good_things|Good things, shared.|अच्छी चीज़ें, साझा।|चांगल्या वस्तू, सामायिक.|ভালো জিনিস, সবার।|நல்ல பொருட்கள், பகிர்வோம்.|మంచి వస్తువులు, పంచుకుందాం.
+days|days|दिन|दिवस|দিন|நாட்கள்|రోజులు
+everyday|Everyday sharing|सामान्य साझाकरण|सामान्य वाटप|সাধারণ ভাগাভাগি|அன்றாட பகிர்வு|రోజువారీ భాగస్వామ్యం
 `;
 export const dictionaries: Record<Locale, Record<string, string>> = {
   en: {},
