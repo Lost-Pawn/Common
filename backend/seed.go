@@ -48,7 +48,7 @@ func (a *App) seed(ctx context.Context) error {
 			qual                        []string
 		}{{"Meera Desai", "manager@common.test", "manager", "Common Community", true, []string{}}, {"Asha Patil", "asha@common.test", "borrower", "Pune", true, []string{"camera"}}, {"Ravi Shah", "ravi@common.test", "borrower", "Pune", true, []string{"camera", "power_tools"}}, {"Community Administrator", "admin@common.test", "admin", "Common Community", true, []string{}}, {"Resource Owner", "owner@common.test", "owner", "Neighbourhood collection", true, []string{}}}
 		for _, d := range demo {
-			if _, e = tx.Exec(ctx, "INSERT INTO users(name,email,password_hash,role,business,verified,qualifications) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(email) DO NOTHING", d.name, d.email, string(h), d.role, d.business, d.verified, d.qual); e != nil {
+			if _, e = tx.Exec(ctx, "INSERT INTO users(name,email,password_hash,role,business,verified,qualifications) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(email) DO UPDATE SET qualifications=ARRAY(SELECT DISTINCT q FROM unnest(users.qualifications || excluded.qualifications) AS q)", d.name, d.email, string(h), d.role, d.business, d.verified, d.qual); e != nil {
 				return e
 			}
 		}
@@ -89,10 +89,23 @@ func (a *App) seed(ctx context.Context) error {
 				}
 			}
 		}
-		_ = tx.QueryRow(ctx, "SELECT count(*) FROM operators").Scan(&n)
-		if n == 0 {
-			if _, e = tx.Exec(ctx, "INSERT INTO operators(name,qualifications,open_hour,close_hour) VALUES('Sunita More',ARRAY['power_tools','camera'],8,20),('Farah Shaikh',ARRAY['camera'],9,18)"); e != nil {
-				return e
+		// Existing local demos keep their old qualifications and gain the new resource examples.
+		for _, o := range []struct {
+			name        string
+			quals       []string
+			open, close int
+		}{
+			{"Sunita More", []string{"power_tools", "camera"}, 8, 20},
+			{"Farah Shaikh", []string{"camera"}, 9, 18},
+		} {
+			tag, err := tx.Exec(ctx, "UPDATE operators SET qualifications=ARRAY(SELECT DISTINCT q FROM unnest(qualifications || $2::text[]) AS q) WHERE name=$1", o.name, o.quals)
+			if err != nil {
+				return err
+			}
+			if tag.RowsAffected() == 0 {
+				if _, err = tx.Exec(ctx, "INSERT INTO operators(name,qualifications,open_hour,close_hour) VALUES($1,$2,$3,$4)", o.name, o.quals, o.open, o.close); err != nil {
+					return err
+				}
 			}
 		}
 	}
