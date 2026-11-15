@@ -24,7 +24,7 @@ func TestFullSharingLifecycle(t *testing.T) {
 	if dsn == "" {
 		t.Skip("TEST_DATABASE_URL is required for integration tests")
 	}
-	if !strings.Contains(strings.Split(dsn, "?")[0], "/knitwork_test") {
+	if !strings.Contains(strings.Split(dsn, "?")[0], "/common_test") {
 		t.Fatal("refusing to reset a non-test database")
 	}
 	ctx := context.Background()
@@ -74,15 +74,15 @@ func TestFullSharingLifecycle(t *testing.T) {
 	}
 	login := func(email string) *http.Cookie {
 		t.Helper()
-		code, body, c := call(nil, "POST", "/api/auth/login", map[string]string{"email": email, "password": "KnitworkDemo2026!"})
+		code, body, c := call(nil, "POST", "/api/auth/login", map[string]string{"email": email, "password": "CommonDemo2026!"})
 		if code != 200 {
 			t.Fatalf("login: %d %s", code, body)
 		}
 		return c
 	}
-	manager := login("manager@knitwork.test")
-	asha := login("asha@knitwork.test")
-	ravi := login("ravi@knitwork.test")
+	manager := login("manager@common.test")
+	asha := login("asha@common.test")
+	ravi := login("ravi@common.test")
 	var managerUser, ashaUser, raviUser User
 	json.Unmarshal(must(manager, "GET", "/api/me", nil, 200), &managerUser)
 	json.Unmarshal(must(asha, "GET", "/api/me", nil, 200), &ashaUser)
@@ -91,7 +91,7 @@ func TestFullSharingLifecycle(t *testing.T) {
 	start = time.Date(start.Year(), start.Month(), start.Day(), 10, 0, 0, 0, india)
 	request := func(cookie *http.Cookie, resource int64, s time.Time, assisted bool) int64 {
 		t.Helper()
-		body := must(cookie, "POST", "/api/bookings", BookingInput{ResourceID: resource, StartsAt: s, EndsAt: s.Add(time.Hour), Purpose: "Prepare a small garment batch", Assisted: assisted, Accepted: true}, 201)
+		body := must(cookie, "POST", "/api/bookings", BookingInput{ResourceID: resource, StartsAt: s, EndsAt: s.Add(time.Hour), Purpose: "Complete a community project", Assisted: assisted, Accepted: true}, 201)
 		var out map[string]int64
 		json.Unmarshal(body, &out)
 		return out["id"]
@@ -242,7 +242,7 @@ func TestFullSharingLifecycle(t *testing.T) {
 		must(manager, "PATCH", "/api/resources/1", map[string]any{"maintenance": false, "reason": "Post repair inspection passed"}, 200)
 	})
 	t.Run("unverified member cannot receive approval", func(t *testing.T) {
-		body := must(nil, "POST", "/api/auth/register", map[string]string{"name": "New Member", "email": "new@example.test", "password": "NewMemberPassword", "business": "New Tailoring"}, 201)
+		body := must(nil, "POST", "/api/auth/register", map[string]string{"name": "New Member", "email": "new@example.test", "password": "NewMemberPassword", "business": "Local community"}, 201)
 		var u User
 		json.Unmarshal(body, &u)
 		b := must(manager, "POST", "/api/bookings", BookingInput{ResourceID: 1, BorrowerID: u.ID, StartsAt: start.Add(6 * time.Hour), EndsAt: start.Add(7 * time.Hour), Purpose: "Assisted request recorded", Accepted: true}, 201)
@@ -295,8 +295,8 @@ func TestFullSharingLifecycle(t *testing.T) {
 		s := start.AddDate(0, 0, 1)
 		one := request(asha, 1, s, true)
 		two := request(ravi, 2, s, true)
-		act(manager, one, ActionInput{Action: "approve", Reason: "Operator reserved on embroidery", OperatorID: &operator}, 200)
-		act(manager, two, ActionInput{Action: "approve", Reason: "Same operator on sewing machine", OperatorID: &operator}, 409)
+		act(manager, one, ActionInput{Action: "approve", Reason: "Operator reserved on the drill kit", OperatorID: &operator}, 200)
+		act(manager, two, ActionInput{Action: "approve", Reason: "Same operator on the camera kit", OperatorID: &operator}, 409)
 		act(manager, one, ActionInput{Action: "cancel", Reason: "Operator conflict test complete"}, 200)
 		act(manager, two, ActionInput{Action: "reject", Reason: "Operator conflict test complete"}, 200)
 	})

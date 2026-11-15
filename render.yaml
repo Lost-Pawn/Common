@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: knitwork
+    name: common
     runtime: docker
     plan: 0.5c-512mb
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: knitwork-db
+          name: common-db
           property: connectionString
       - key: APP_ENV
         value: production
@@ -24,10 +24,10 @@ services:
       - key: HELP_MODEL
         sync: false
 databases:
-  - name: knitwork-db
+  - name: common-db
     plan: 0.1c-256mb
-    databaseName: knitwork
-    user: knitwork
+    databaseName: common
+    user: common
     diskSizeGB: 5
     ipAllowList: []
     postgresMajorVersion: '17'

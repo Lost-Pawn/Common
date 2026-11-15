@@ -33,7 +33,7 @@ func (a *App) bookingAction(w http.ResponseWriter, r *http.Request) {
 	}
 	p, e := loadPolicy(ctx, tx, b.Resource)
 	if e != nil {
-		fail(w, 404, "not_found", "Equipment not found.")
+		fail(w, 404, "not_found", "Resource not found.")
 		return
 	}
 	u := current(r)
@@ -136,7 +136,7 @@ func (a *App) bookingAction(w http.ResponseWriter, r *http.Request) {
 		_, e = tx.Exec(ctx, "UPDATE bookings SET status='in_use',checked_in_at=now() WHERE id=$1", b.ID)
 	case "return":
 		if b.Status != "in_use" {
-			fail(w, 409, "invalid_state", "Only equipment in use can be returned.")
+			fail(w, 409, "invalid_state", "Only resource in use can be returned.")
 			return
 		}
 		if code := saveCondition(ctx, tx, u.ID, b.ID, "after", in); code != "" {

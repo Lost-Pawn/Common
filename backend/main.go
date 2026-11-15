@@ -180,7 +180,7 @@ func main() {
 		defer c()
 		_ = srv.Shutdown(s)
 	}()
-	log.Printf("Knitwork listening on %s", fmt.Sprintf("http://localhost:%s", port))
+	log.Printf("Common listening on %s", fmt.Sprintf("http://localhost:%s", port))
 	if e = srv.ListenAndServe(); e != nil && e != http.ErrServerClosed {
 		log.Fatal(e)
 	}

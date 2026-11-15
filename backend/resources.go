@@ -96,7 +96,7 @@ func (a *App) maintenance(w http.ResponseWriter, r *http.Request) {
 		var n int
 		_ = tx.QueryRow(ctx, `SELECT count(*) FROM incidents i JOIN bookings b ON b.id=i.booking_id WHERE b.resource_id=$1 AND i.kind='damage' AND i.status<>'resolved'`, id).Scan(&n)
 		if n > 0 {
-			fail(w, 409, "open_damage", "Resolve open damage reports before releasing the equipment.")
+			fail(w, 409, "open_damage", "Resolve open damage reports before releasing the resource.")
 			return
 		}
 	}
@@ -105,7 +105,7 @@ func (a *App) maintenance(w http.ResponseWriter, r *http.Request) {
 		e = audit(ctx, tx, current(r).ID, nil, &id, "resource_readiness_changed", in.Reason)
 	}
 	if e == nil && in.Maintenance {
-		_, e = tx.Exec(ctx, `INSERT INTO notifications(user_id,booking_id,kind,message) SELECT borrower_id,id,'maintenance','Your resource is on a maintenance hold. Contact the centre before travelling.' FROM bookings WHERE resource_id=$1 AND status IN ('approved','requested','waitlisted')`, id)
+		_, e = tx.Exec(ctx, `INSERT INTO notifications(user_id,booking_id,kind,message) SELECT borrower_id,id,'maintenance','Your resource is on a maintenance hold. Contact the owner before travelling.' FROM bookings WHERE resource_id=$1 AND status IN ('approved','requested','waitlisted')`, id)
 	}
 	if e == nil {
 		e = tx.Commit(ctx)
@@ -118,7 +118,7 @@ func (a *App) maintenance(w http.ResponseWriter, r *http.Request) {
 }
 func (a *App) operators(w http.ResponseWriter, r *http.Request) {
 	if current(r) == nil {
-		fail(w, 403, "forbidden", "Only centre staff can view operator scheduling.")
+		fail(w, 403, "forbidden", "Only community staff can view operator scheduling.")
 		return
 	}
 	items, e := listJSON(r.Context(), a.db, "SELECT to_jsonb(o) FROM operators o ORDER BY id")

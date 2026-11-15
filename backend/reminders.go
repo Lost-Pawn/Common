@@ -11,7 +11,7 @@ func (a *App) reminderTick(ctx context.Context) error {
 	if e != nil {
 		return e
 	}
-	_, e = a.db.Exec(ctx, `INSERT INTO notifications(user_id,booking_id,kind,message,dedupe_key) SELECT borrower_id,id,'overdue','Your equipment session is overdue. Contact the manager and arrange return.','overdue:'||id||':'||ends_at FROM bookings WHERE status='in_use' AND ends_at<now() ON CONFLICT(dedupe_key) DO NOTHING`)
+	_, e = a.db.Exec(ctx, `INSERT INTO notifications(user_id,booking_id,kind,message,dedupe_key) SELECT borrower_id,id,'overdue','Your resource session is overdue. Contact the manager and arrange return.','overdue:'||id||':'||ends_at FROM bookings WHERE status='in_use' AND ends_at<now() ON CONFLICT(dedupe_key) DO NOTHING`)
 	if e != nil {
 		return e
 	}

@@ -1,14 +1,15 @@
+name: common
 services:
   db:
     image: postgres:17.6-alpine
     environment:
-      POSTGRES_DB: knitwork
-      POSTGRES_USER: knitwork
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-knitwork-only}
+      POSTGRES_DB: ${POSTGRES_DB:-common}
+      POSTGRES_USER: ${POSTGRES_USER:-common}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-common-only}
     volumes:
-      - knitwork-data:/var/lib/postgresql/data
+      - common-data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, pg_isready -U knitwork -d knitwork]
+      test: [CMD-SHELL, pg_isready -U ${POSTGRES_USER:-common} -d ${POSTGRES_DB:-common}]
       interval: 3s
       timeout: 3s
       retries: 30
@@ -17,7 +18,7 @@ services:
   app:
     build: .
     environment:
-      DATABASE_URL: postgres://knitwork:${POSTGRES_PASSWORD:-local-knitwork-only}@db:5432/knitwork?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-common}:${POSTGRES_PASSWORD:-local-common-only}@db:5432/${POSTGRES_DB:-common}?sslmode=disable
       APP_ENV: development
       APP_ORIGIN: http://localhost:${APP_PORT:-8080}
       DEMO_SEED: 'true'
@@ -36,4 +37,5 @@ services:
       timeout: 5s
       retries: 10
 volumes:
-  knitwork-data:
+  common-data:
+    name: ${DATA_VOLUME:-common-data}

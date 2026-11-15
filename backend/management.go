@@ -210,7 +210,7 @@ func (a *App) readNotifications(w http.ResponseWriter, r *http.Request) {
 func (a *App) dashboard(w http.ResponseWriter, r *http.Request) {
 	u := current(r)
 	if u == nil {
-		fail(w, 403, "forbidden", "This view is for centre staff.")
+		fail(w, 403, "forbidden", "This view is for community staff.")
 		return
 	}
 	v, e := listJSON(r.Context(), a.db, `SELECT jsonb_build_object('id',r.id,'name',r.name,'maintenance',r.maintenance,'requests',count(b.id) FILTER(WHERE b.status='requested'),'waiting',count(b.id) FILTER(WHERE b.status='waitlisted'),'overdue',count(b.id) FILTER(WHERE b.status='in_use' AND b.ends_at<now()),'completed',count(b.id) FILTER(WHERE b.status='completed'),'hours',COALESCE(sum(extract(epoch FROM(b.ends_at-b.starts_at))/3600) FILTER(WHERE b.status='completed'),0)) FROM resources r LEFT JOIN bookings b ON b.resource_id=r.id WHERE $1 OR r.owner_id=$2 GROUP BY r.id ORDER BY r.id`, staff(u), u.ID)

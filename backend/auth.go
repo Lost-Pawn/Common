@@ -32,13 +32,13 @@ func (a *App) session(w http.ResponseWriter, r *http.Request, id int64) error {
 	token := hex.EncodeToString(b)
 	_, e := a.db.Exec(r.Context(), "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,$3)", hashToken(token), id, time.Now().Add(24*time.Hour))
 	if e == nil {
-		http.SetCookie(w, &http.Cookie{Name: "knitwork_session", Value: token, Path: "/", HttpOnly: true, Secure: a.production, SameSite: http.SameSiteLaxMode, MaxAge: 86400})
+		http.SetCookie(w, &http.Cookie{Name: "common_session", Value: token, Path: "/", HttpOnly: true, Secure: a.production, SameSite: http.SameSiteLaxMode, MaxAge: 86400})
 	}
 	return e
 }
 func (a *App) require(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, e := r.Cookie("knitwork_session")
+		c, e := r.Cookie("common_session")
 		if e != nil {
 			fail(w, 401, "login_required", "Please sign in.")
 			return
@@ -154,10 +154,10 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 	respond(w, 201, u)
 }
 func (a *App) logout(w http.ResponseWriter, r *http.Request) {
-	if c, e := r.Cookie("knitwork_session"); e == nil {
+	if c, e := r.Cookie("common_session"); e == nil {
 		_, _ = a.db.Exec(r.Context(), "DELETE FROM sessions WHERE token_hash=$1", hashToken(c.Value))
 	}
-	http.SetCookie(w, &http.Cookie{Name: "knitwork_session", Value: "", Path: "/", MaxAge: -1, HttpOnly: true, Secure: a.production, SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{Name: "common_session", Value: "", Path: "/", MaxAge: -1, HttpOnly: true, Secure: a.production, SameSite: http.SameSiteLaxMode})
 	respond(w, 200, map[string]bool{"ok": true})
 }
 func (a *App) me(w http.ResponseWriter, r *http.Request) { respond(w, 200, current(r)) }

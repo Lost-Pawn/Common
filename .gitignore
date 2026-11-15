@@ -9,7 +9,7 @@ node_modules/
 out/
 coverage/
 *.log
-backend/knitwork
+backend/common
 playwright-report/
 test-results/
 .DS_Store

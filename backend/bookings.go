@@ -45,7 +45,7 @@ func (a *App) createBooking(w http.ResponseWriter, r *http.Request) {
 	}
 	p, e := loadPolicy(ctx, tx, in.ResourceID)
 	if e != nil {
-		fail(w, 404, "not_found", "Equipment not found.")
+		fail(w, 404, "not_found", "Resource not found.")
 		return
 	}
 	if p.Maintenance {
